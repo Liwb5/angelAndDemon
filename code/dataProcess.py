@@ -15,19 +15,22 @@ import pandas as pd
 
 from imblearn.combine import SMOTEENN
 import sys
+import os
 
 if __name__ == "__main__":
     #----------parameters---------------#
-    trainPath = "../data/train.csv"
-    testPath = "../data/test.csv"
-    Thresh = 50000           #每一列非nan值超过Thresh才会保留
-    Frequency = 80000        #每一列，某元素出现次数超过Frequency的，那一列会被丢弃
+    os.chdir('/home/liwb/Documents/projects/angelAndDemon/')
+    
+    trainPath = "./originalDataset/train.csv"
+    testPath = "./originalDataset/test.csv"
+    Thresh = 10000           #每一列非nan值超过Thresh才会保留
+    Frequency = 100000        #每一列，某元素出现次数超过Frequency的，那一列会被丢弃
     version = '5'            #数据处理后保存成文件的文件版本号
     version = sys.argv[1]
 
     #读取原始数据
-    trainData = pd.read_csv(trainPath)
-    testData = pd.read_csv(testPath)
+    trainData = pd.read_csv(trainPath, header=None)
+    testData = pd.read_csv(testPath, header=None)
 
     print('trainData shape: ', trainData.shape)
     print('testData shape: ', testData.shape)
@@ -91,7 +94,7 @@ if __name__ == "__main__":
     print("trainRes shape:",trainRes.shape)
     #保存测试集
     testRes = pd.DataFrame(testRes)
-    testRes.to_csv('../data/testRes%s.csv'%(version), header=False,  encoding='utf-8')
+    testRes.to_csv('./dataAfterProcess/testRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
 
     #分割验证集
     trainRes1 = np.hstack((trainRes, label))
@@ -106,11 +109,11 @@ if __name__ == "__main__":
 
     #保存训练集
     trainRes2 = pd.DataFrame(trainRes2)
-    trainRes2.to_csv('../data/trainRes%s.csv'%(version),  index=False, encoding='utf-8')
+    trainRes2.to_csv('./dataAfterProcess/trainRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
 
     #保存验证集
     validRes = pd.DataFrame(validRes)
-    validRes.to_csv('../data/validRes%s.csv'%(version),  index=False, encoding='utf-8')
+    validRes.to_csv('./dataAfterProcess/validRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
 
 
 

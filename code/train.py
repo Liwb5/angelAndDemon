@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 import sys
+import os
 
 
 class Net(nn.Module):
@@ -60,14 +61,15 @@ def train(net,inputs,labels,validData=None,validLabels=None,lr=0.001,weight=[0.5
     
     
 if __name__ == "__main__":
+    os.chdir('/home/liwb/Documents/projects/angelAndDemon/')
     version = sys.argv[1]
-    trainPath = '../data/trainRes%s.csv'%(version)
-    validPath = '../data/validRes%s.csv'%(version)
+    trainPath = './dataAfterProcess/trainRes%s.csv'%(version)
+    validPath = './dataAfterProcess/validRes%s.csv'%(version)
     
     
     
-    trainData = pd.read_csv(trainPath)
-    validData = pd.read_csv(validPath)
+    trainData = pd.read_csv(trainPath, header=None)
+    validData = pd.read_csv(validPath, header=None)
     x_data = trainData.values[:,0:trainData.shape[1]-1]
     y_data = trainData.values[:,trainData.shape[1]-1]
     x_valid = validData.values[:,0:validData.shape[1]-1]
@@ -86,23 +88,12 @@ if __name__ == "__main__":
     weight = [0.003,0.997]
     maxNumEpoch = 100
     learning_rate = 0.001
-    targetPath = '../data/pytotrch_model2.csv'
+    
 
     #-------training -------------#
     train(net,x_data,y_data,x_valid,y_valid,lr=learning_rate,weight=weight,maxNumEpoch=maxNumEpoch)
     
     
-
-    #-------testing & saving ------------#
-    testPath = '../data/testRes%s.csv'%(version)
-    testData = pd.read_csv(testPath)
-    testData = testData.values
-    print(testData.shape)
-    a=input()
-    x_test = Variable(torch.from_numpy(testData[:]).float(),requires_grad=True)
-    prob = net.softmax(net(x_test)).data[:,1].numpy().reshape((,1))
-    c = pd.DataFrame(prob)
-    c.to_csv(targetPath,index=False,encoding = 'utf-8')
     
     
     
