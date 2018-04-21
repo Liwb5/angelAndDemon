@@ -1,0 +1,10 @@
+./*~
+models/
+process/
+outputs/
+other/
+dataAfterProcess/
+*ipynb
+.ipynb_checkpoints/
+__pycache__
+
