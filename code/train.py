@@ -6,12 +6,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from sklearn import metrics
-from sklearn.metrics import roc_auc_score as auc
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve, auc
 from sklearn import preprocessing
 
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt  
 import sys
 import os
 
@@ -52,10 +53,20 @@ def train(net,inputs,labels,validData=None,validLabels=None,lr=0.001,weight=[0.5
         loss.backward()
         optimizer.step()
         if epoch % 5 == 0:
-            predict = torch.Tensor.numpy(net.softmax(net(valid)).data[:,1])
-            score = auc(validLabels,predict)
+            proba = net.softmax(net(valid)).data[:,1]
+            predict = torch.Tensor.numpy(proba)
+            score = roc_auc_score(validLabels,predict)
             print('epoch: %d, loss: %5f, auc: %5f predict: %d' % (epoch, loss.data[0],score, sum(predict)))
-        
+       
+    
+    proba = net.softmax(net(valid)).data[:,1]
+    predict = torch.Tensor.numpy(proba)
+    fpr, tpr, thresholds = roc_curve(validLabels, predict)
+    roc_auc = auc(fpr, tpr)
+    #画图，只需要plt.plot(fpr,tpr),变量roc_auc只是记录auc的值，通过auc()函数能计算出来  
+    plt.plot(fpr, tpr, lw=1)  
+    plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck')  
+    plt.show()
     #torch.save(net.state_dict(), '../model/' + "score-{:.4f}-model.pkl".format(score))  
     
     
