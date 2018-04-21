@@ -116,22 +116,22 @@ if __name__ == "__main__":
     testRes = pd.DataFrame(testRes)
     testRes.to_csv('./dataAfterProcess/testRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
     
-    #分割验证集
+    #保存训练集
     trainRes1 = np.hstack((trainRes, label))
-    print("trainRes shape after merge label: ",trainRes1.shape)
-    np.random.shuffle(trainRes1)
+    trainRes2 = pd.DataFrame(trainRes1)
+    trainRes2.to_csv('./dataAfterProcess/trainRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
 
-    validRes = trainRes1[0:20000]
-    trainRes2 = trainRes1[20000:]
-    print("validRes shape: ",validRes.shape, "trainRes2 shape: ",trainRes2.shape)
+    #分割验证集
+    #print("trainRes shape after merge label: ",trainRes1.shape)
+    #np.random.shuffle(trainRes1)
+
+    #validRes = trainRes1[0:20000]
+    #trainRes2 = trainRes1[20000:]
+    #print("validRes shape: ",validRes.shape, "trainRes2 shape: ",trainRes2.shape)
 
     #保存验证集
-    validRes = pd.DataFrame(validRes)
-    validRes.to_csv('./dataAfterProcess/validRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
-
-    #保存训练集
-    trainRes2 = pd.DataFrame(trainRes2)
-    trainRes2.to_csv('./dataAfterProcess/trainRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
+    #validRes = pd.DataFrame(validRes)
+    #validRes.to_csv('./dataAfterProcess/validRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
 
     
 

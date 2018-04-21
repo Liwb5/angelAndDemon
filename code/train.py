@@ -9,6 +9,7 @@ from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve, auc
 from sklearn import preprocessing
+from sklearn.model_selection import StratifiedKFold
 
 import numpy as np
 import pandas as pd
@@ -53,10 +54,11 @@ def train(net,inputs,labels,validData=None,validLabels=None,lr=0.001,weight=[0.5
         loss.backward()
         optimizer.step()
         if epoch % 5 == 0:
-            proba = net.softmax(net(valid)).data[:,1]
-            predict = torch.Tensor.numpy(proba)
-            score = roc_auc_score(validLabels,predict)
-            print('epoch: %d, loss: %5f, auc: %5f predict: %d' % (epoch, loss.data[0],score, sum(predict)))
+            proba = net.softmax(net(valid))
+            predict = torch.Tensor.numpy(proba.data)
+            result = predict.argmax(1) #将概率转成标签。
+            score = roc_auc_score(validLabels,predict[:,1])
+            print('epoch: %d, loss: %5f, auc: %5f predict: %d' % (epoch, loss.data[0],score, sum(result)))
        
     
     proba = net.softmax(net(valid)).data[:,1]
@@ -80,13 +82,22 @@ if __name__ == "__main__":
     
     
     trainData = pd.read_csv(trainPath, header=None)
+    #X = trainData.values[:,0:trainData.shape[1]-1]
+    #y = trainData.values[:,trainData.shape[1]-1]
+    
+    # Kfold = 5
+    # skf = StratifiedKFold(n_splits=Kfold) #5 fold交叉验证
+    # for train_index, test_index in skf.split(X, y):
+    #     X_train, X_test = X[train_index], X[test_index]
+    #     y_train, y_test = y[train_index], y[test_index]
+        
     validData = pd.read_csv(validPath, header=None)
     x_data = trainData.values[:,0:trainData.shape[1]-1]
     y_data = trainData.values[:,trainData.shape[1]-1]
     x_valid = validData.values[:,0:validData.shape[1]-1]
     y_valid = validData.values[:,validData.shape[1]-1]
-    #print(y_data)
-    #a = input("press any key to continue: ")
+    print(y_data)
+    a = input("press any key to continue: ")
     print(x_data.shape, x_valid.shape)
 
     print(sum(y_data), sum(y_valid))
@@ -105,7 +116,14 @@ if __name__ == "__main__":
     train(net,x_data,y_data,x_valid,y_valid,lr=learning_rate,weight=weight,maxNumEpoch=maxNumEpoch)
     
     
+    testPath = "./dataAfterProcess/testRes%s.csv"%(version)
+    testData = pd.read_csv(testPath, header=None)
+    x_test = Variable(torch.from_numpy(testData.values).float(), requires_grad=True)
+    prob = net.softmax(net(x_test)).data[:,1].numpy().reshape((-1,1))
     
+    result = pd.read_csv('./originalDataset/exampleSubmission.csv')
+    result.label = prob
+    result.to_csv('./outputs/submission1.csv',index=False)
     
     
     
