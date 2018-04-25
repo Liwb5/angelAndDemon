@@ -69,69 +69,134 @@ def train(net,inputs,labels,validData=None,validLabels=None,lr=0.001,weight=[0.5
     plt.plot(fpr, tpr, lw=1)  
     plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck')  
     plt.show()
-    #torch.save(net.state_dict(), '../model/' + "score-{:.4f}-model.pkl".format(score))  
+    #torch.save(net.state_dict(), '../model/' + "score-{:.4f}-model.pkl".format(score))
     
     
     
-if __name__ == "__main__":
-    os.chdir('/home/liwb/Documents/projects/angelAndDemon/')
-    version = sys.argv[1]
-    trainPath = './dataAfterProcess/trainRes%s.csv'%(version)
-    validPath = './dataAfterProcess/validRes%s.csv'%(version)
-    
-    
-    
-    trainData = pd.read_csv(trainPath, header=None)
-    #X = trainData.values[:,0:trainData.shape[1]-1]
-    #y = trainData.values[:,trainData.shape[1]-1]
-    
-    # Kfold = 5
-    # skf = StratifiedKFold(n_splits=Kfold) #5 fold交叉验证
-    # for train_index, test_index in skf.split(X, y):
-    #     X_train, X_test = X[train_index], X[test_index]
-    #     y_train, y_test = y[train_index], y[test_index]
-        
-    validData = pd.read_csv(validPath, header=None)
-    x_data = trainData.values[:,0:trainData.shape[1]-1]
-    y_data = trainData.values[:,trainData.shape[1]-1]
-    x_valid = validData.values[:,0:validData.shape[1]-1]
-    y_valid = validData.values[:,validData.shape[1]-1]
-    print(y_data)
-    a = input("press any key to continue: ")
-    print(x_data.shape, x_valid.shape)
-
-    print(sum(y_data), sum(y_valid))
-    print(y_data.shape, y_valid.shape)
+#神经网络训练，并且用测试集测试，保存测试集的结果
+def NetTrain(x_data, y_data, x_valid, y_valid,
+            testData, version, versionSaved='100'):
     
     features = x_data.shape[1]
-    print("feature: ",features)
     net = Net(features)
     
     weight = [0.003,0.997]
     maxNumEpoch = 100
     learning_rate = 0.001
     
-
     #-------training -------------#
-    train(net,x_data,y_data,x_valid,y_valid,lr=learning_rate,weight=weight,maxNumEpoch=maxNumEpoch)
+    train(net,x_data,y_data,x_valid,y_valid,\
+          lr=learning_rate,weight=weight,maxNumEpoch=maxNumEpoch)
     
-    
-    testPath = "./dataAfterProcess/testRes%s.csv"%(version)
-    testData = pd.read_csv(testPath, header=None)
-    x_test = Variable(torch.from_numpy(testData.values).float(), requires_grad=True)
+    x_test = Variable(torch.from_numpy(testData).float(), requires_grad=True)
     prob = net.softmax(net(x_test)).data[:,1].numpy().reshape((-1,1))
     
     result = pd.read_csv('./originalDataset/exampleSubmission.csv')
     result.label = prob
-    result.to_csv('./outputs/submission1.csv',index=False)
+    result.to_csv('./outputs/submission%s.csv'%(versionSaved),index=False) 
+    
+
+    
+#对xgboost模型进行交叉验证，并且画出ROC曲线。
+def xgboost_cv(X, y, xgboost, Kfold):
+    random_state = np.random.RandomState(0)
+    skf = StratifiedKFold(n_splits=Kfold,random_state=random_state) #k fold交叉验证
+    i=0
+    
+    for train_index, test_index in skf.split(X,y):
+        xgb_model = xgboost
+        xgb_model = xgb_model.fit(X[train_index], y[train_index], 
+                                  eval_set=[(X[train_index], y[train_index]),
+                                            (X[test_index], y[test_index])],
+                                  eval_metric = "auc",
+                                  verbose = False)
+
+        #evals_result = xgb_model.evals_result()
+        #print(evals_result)
+        probas_ = xgb_model.predict_proba(X[test_index])
+
+        #[:,1]二分类有0的概率，也有预测为1的概率，这里提取预测为1的概率
+        fpr, tpr, thresholds = roc_curve(y[test_index], probas_[:,1])
+        roc_auc = auc(fpr, tpr)
+        score = roc_auc_score(y[test_index] , probas_[:,1])#验证集的auc分数
+
+        train_probas = xgb_model.predict_proba(X[train_index])
+        train_score = roc_auc_score(y[train_index], train_probas[:,1])#训练集的auc分数
+        print("auc_test: %5f,auc_train:%5f in %d fold. index shape:%d"\
+              %(score, train_score, i, len(train_index))) 
+
+        plt.plot(fpr, tpr, lw=1, alpha=0.8,
+                 label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
+        i += 1
+    
+    
+
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+             label='Luck', alpha=.8)
+
+    plt.show()
+
+    
+    
+#训练模型，并且用测试集测试，得到预测结果，保存预测结果
+def xgboostTrain(X, y, testX, versionSaved='100', params=None):
+    
+    xgb_final = xgb.XGBClassifier(scale_pos_weight=340,
+                        n_jobs=5,
+                        max_depth=5,
+                        min_child_weight=1,
+                        learning_rate = 0.1,
+                        #random_state = random_state,
+                        gamma = 0,
+                        subsample = 0.8,
+                        colsample_bytree = 0.7,
+                        n_estimators = 50)  
+    
+    xgb_final = xgb_final.fit(X, y, 
+                     eval_set=[(X, y)],
+                     eval_metric = "auc",
+                     verbose = False)
+    
+    print(xgb_final.evals_result())
+    predict = xgb_final.predict(testX)
+    #查看有多少样本被预测为1
+    print(sum(predict),' samples have been predicted as positive samples')
+    probas_ = xgb_final.predict_proba(testX)
+    probas = probas_[:,1]
+    
+    #保存测试集的预测结果
+    result = pd.read_csv('./originalDataset/exampleSubmission.csv')
+    result.label = probas
+    result.to_csv('./outputs/submission%s.csv'%(versionSaved), index=False)
+    
+    
+if __name__ == "__main__":
+    os.chdir('/home/liwb/Documents/projects/angelAndDemon/')
+    version = sys.argv[1]
+    trainPath = './dataAfterProcess/trainRes%s.csv'%(version)
+    trainData = pd.read_csv(trainPath, header=None)
+    print('trainData shape: ',trainData.shape)
+    #X = trainData.values[:,0:trainData.shape[1]-1]
+    #y = trainData.values[:,trainData.shape[1]-1]
+    
+        
+    #x_data = trainData.values[:,0:trainData.shape[1]-1]
+    #y_data = trainData.values[:,trainData.shape[1]-1]
+    #x_valid = validData.values[:,0:validData.shape[1]-1]
+    #y_valid = validData.values[:,validData.shape[1]-1]
+    #print(x_data.shape, x_valid.shape)
+    #print(sum(y_data), sum(y_valid))
+    #print(y_data.shape, y_valid.shape)
+    
+    input("press any key to continue: ")
+    
+    testPath = "./dataAfterProcess/testRes%s.csv"%(version)
+    testData = pd.read_csv(testPath, header=None)
     
     
     
     
     
     
-    
-    
-    
-    
+
     
