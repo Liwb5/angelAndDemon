@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 from sklearn import cross_validation, metrics   #Additional     scklearn functions
 from sklearn.grid_search import GridSearchCV   #Perforing grid search
-from sklearn.externals import joblib #jbolib模块
+from sklearn.externals import joblib #joblib模块
 
 import xgboost as xgb
 
