@@ -202,10 +202,10 @@ if __name__ == "__main__":
     
     #将其它列中的非数值数据转换成nan值。
     #coerce参数将非数字的值转换成nan，如果是ignore参数，则不处理
-    data = data.apply(lambda x:pd.to_numeric(x, errors="coerce"))
+    #data = data.apply(lambda x:pd.to_numeric(x, errors="coerce"))
     
     #删除NAN值很多的列
-    data = remove_NAN(data, Threshold)
+    #data = remove_NAN(data, Threshold)
 
     print(data.shape)
     #缺失值填充
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     #data = norm(data)
     
     #合并所有的数据
-    data = np.hstack((data.values, nonNumericData.values, dateData.values))
+    data = np.hstack((data.values, nonNumericData.values))
     print('merge data, nonNumericData and dateData: ',data.shape)
 
     testRes = data[trainNum:]
