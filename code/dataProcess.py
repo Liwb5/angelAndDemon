@@ -73,7 +73,7 @@ def process_date(data):
         date: DataFrame类型。将日期所在的列按照年月日时分秒映射成6个独立的属性。
     """
     dateCol = 206  #时间所在的列，手动统计的
-    print(data[dateCol].head())
+    
     date = pd.DataFrame()
     date['date'] = pd.to_datetime(pd.Series(data[dateCol]), format='%Y-%m-%d-%H.%M.%S.%f')
     
@@ -157,24 +157,25 @@ version = '50'
 if __name__ == "__main__":
     """
     usage:
-        python path/to/dataProcess.py version
-        
-        其中，version是处理完数据后，保存数据的文件名版本号。为了区分不同的处理版本。
-        原始数据保存在："../originalDataset/train.csv"
-        处理后的数据保存在：'../dataAfterProcess/'目录下。
+        cd /path/to/code/  #进入代码文件夹
+        mkdir dataAfterProcess/  #新建文件夹，用于存放处理好的数据
+        python dataProcess.py  /path/to/train.csv  /path/to/test.csv #执行数据处理代码，两个参数分别是训练集与测试集的所在的路径
+
     """
-    
+    """ 
     path = os.path.dirname(__file__) #获得本文件所在的目录
     if path != "":
         os.chdir(path) #将当前路径设置为本文件所在的目录，方便下面读取文件。
-
-    if len(sys.argv) >= 2:
-        #数据处理后保存成文件的文件版本号     
-        version = sys.argv[1]
+    """
+    
+    if len(sys.argv) >= 3:
+        #version = sys.argv[1]
+        trainPath = sys.argv[1]
+        testPath = sys.argv[2]
     
 
-    trainPath = "../originalDataset/train.csv"
-    testPath = "../originalDataset/test.csv"    
+    #trainPath = "../originalDataset/train.csv"
+    #testPath = "../originalDataset/test.csv"    
     
     trainData, testData = read_data(trainPath, testPath)
 
@@ -194,6 +195,7 @@ if __name__ == "__main__":
     data = pd.DataFrame(data)
     print('merge data shape: ',data.shape)
     
+    print('processing data with nonNumeric data (it might take a few minutes)...')
     data, nonNumericData = process_nonNumeric(data)
 
     data, dateData = process_date(data)
@@ -224,15 +226,16 @@ if __name__ == "__main__":
     print("testRes shape:",testRes.shape)
     print("trainRes shape:",trainRes.shape)
     
+    print('saving data (it might take a few minutes)...')
     #保存测试集
     testRes = pd.DataFrame(testRes)
-    testRes.to_csv('../dataAfterProcess/testRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
+    testRes.to_csv('./dataAfterProcess/testResult.csv', header=False, index=False, encoding='utf-8')
     
     #保存训练集
     trainRes1 = np.hstack((trainRes, label))
     trainRes2 = pd.DataFrame(trainRes1)
-    trainRes2.to_csv('../dataAfterProcess/trainRes%s.csv'%(version), header=False, index=False, encoding='utf-8')
-    
+    trainRes2.to_csv('./dataAfterProcess/trainResult.csv', header=False, index=False, encoding='utf-8')
+    print('successful saving data!')
 
     
 
