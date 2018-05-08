@@ -7,4 +7,5 @@ other/
 dataAfterProcess/
 .ipynb_checkpoints/
 __pycache__
-
+code/dataAfterProcess/
+code/originalDataset/

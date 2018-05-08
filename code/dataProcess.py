@@ -149,7 +149,7 @@ def norm(data):
 #----------parameters---------------#
 
 
-Threshold = 10000           #每一列非nan值超过Thresh才会保留
+Threshold = 1           #每一列非nan值超过Thresh才会保留
 #Frequency = 100000        #每一列，某元素出现次数超过Frequency的，那一列会被丢弃
 version = '50'       
 
@@ -204,8 +204,8 @@ if __name__ == "__main__":
     #coerce参数将非数字的值转换成nan，如果是ignore参数，则不处理
     #data = data.apply(lambda x:pd.to_numeric(x, errors="coerce"))
     
-    #删除NAN值很多的列
-    #data = remove_NAN(data, Threshold)
+    #删除全部都是NAN值的列
+    data = remove_NAN(data, Threshold)
 
     print(data.shape)
     #缺失值填充
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     #data = norm(data)
     
     #合并所有的数据
-    data = np.hstack((data.values, nonNumericData.values))
+    data = np.hstack((data.values, nonNumericData.values, dateData.values))
     print('merge data, nonNumericData and dateData: ',data.shape)
 
     testRes = data[trainNum:]

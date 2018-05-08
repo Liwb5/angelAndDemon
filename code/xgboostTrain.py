@@ -228,6 +228,15 @@ if __name__ == "__main__":
     else:
         trainPath = './dataAfterProcess/trainResult.csv'
         testPath = './dataAfterProcess/testResult.csv'
+    
+    outputPath = os.path.exists('./outputs/')
+    modelPath = os.path.exists('./models/')
+    if not outputPath:
+        print('can not find the directory of ./outputs/')
+        exit()
+    if not modelPath:
+        print('can not find the directory of ./models/')
+        exit()
         
     #version = input("Please input the version of the dataset you want to load: ")
     
@@ -241,7 +250,7 @@ if __name__ == "__main__":
     testX = testData.values
     print(X.shape, y.shape, testX.shape)
     
-    print('traing model(it might take a few time)...')
+    print('training model(it might take a few time)...')
     xgboostTrain(X, y, testX, params=params)
     
     """
